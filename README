@@ -1,0 +1,186 @@
+MailWrap
+========
+
+MailWrap is a plugin for Apple Mail on OS X, making it easier to compose
+well-formed and correctly wrapped plain text messages. It introduces line
+wrapping and paragraph filling operations, and extends the built-in
+indentation functions to work in plain text mode.
+
+Mail was once quite a good 'net citizen. It could be configured to generate
+plain text email, and would do so with the text neatly wrapped at 76
+columns. It used the RFC2646 format=flowed extension to indicate that these
+wrapped paragraphs could be reflowed using trailing spaces. Mailing list
+archives and traditional mail clients saw readable 80-column text without
+noisy encoding, but more sophisticated readers could re-fill the paragraphs
+to suit the display width.
+
+However, in line with the near-universal decline in software quality over
+time, recent versions of Mail now treat paragraphs as a single long line.
+They mangle messages with a quoted-printable encoding if necessary to meet
+RFC line-length requirements. The resulting email leaves a very visible mess
+in mailing list archives on web, as well as drawing understandable ire from
+recipients with traditional unix mail clients.
+
+Fortunately, even if Mac users find themselves drawn to Apple Mail for its
+convenient reading interface and good platform integration, all is not lost.
+Provided lines do not exceed 77 characters in length, Mail won't encode your
+outgoing messages as quoted-printable, resulting in a perfectly acceptable
+plain text message that won't embarrass you in public. Manual paragraph
+filling is tedious and time-consuming, but the MailWrap plugin can help
+automate the job.
+
+
+Installation
+------------
+
+MailWrap is currently compatible with Apple Mail 7.0 and later. To install,
+unpack the source tar.gz file, change to the unpacked directory and run
+
+  python install.py
+
+Plugin bundles contain a list of UUIDs identifying versions of Mail with
+which they are compatible. The install.py script extracts the correct UUID
+from the installed version of Mail, generates a MailWrap.bundle to match,
+and installs it in ~/Library/Mail/Bundles/. You will need to quit and
+relaunch Mail for the plugin to be registered.
+
+Sometimes when Mail is updated, its compatibility UUID changes. Mail will
+then disable plugins, moving them from 'Bundles/' to 'Bundles (Disabled)/'.
+The user is notified when this happens, and it is sufficient to simply run
+the install.py script again. The old disabled bundle will be cleared away,
+and a new one built and installed to match the new version of Mail.
+
+
+Features
+--------
+
+Two new items are appended to the Edit menu, 'Fill Text' and 'Wrap Text',
+with key-bindings Command-\ and Option-Command-\.
+
+Fill Text reformats the current paragraph block to the configured width,
+treating a block of lines separated by spaces or a change in quote level as
+a single paragraph. If a block of text is selected, all paragraphs which
+overlap the selection are filled.
+
+This operation preserves quote level, allowing for the quote characters in
+the fill width, and if the first line is indented by one or more spaces,
+subsequent lines will be indented with spaces to the same column. Exactly
+one blank line is left between the formatted paragraph and the next.
+
+Similarly, Wrap Text wraps the current line to the configured width,
+retaining any leading indent and the quote level on any continuation lines.
+If a block of text is selected, all lines which overlap the selection are
+wrapped.
+
+MailWrap also fixes the built-in Increase/Decrease Indentation operations to
+work on plain text messages. These will insert or remove a configurable
+number of spaces at the start of the current line or all lines overlapping
+the current selection.
+
+Finally, by default MailWrap will trim the excessively verbose attribution
+line Mail inserts when composing a reply, i.e.
+
+  On 8 Apr 2014, at 10:08:34, Chris Webb <chris@arachsys.com> wrote:
+
+ will become just
+
+  Chris Webb <chris@arachsys.com> wrote:
+
+This behaviour can be disabled in the preferences.
+
+
+Configuration
+-------------
+
+MailWrap reads a handful of preferences from the uk.me.cdw.MailWrap domain.
+These can be set at the command line with the OS X defaults command:
+
+  defaults write uk.me.cdw.MailWrap BulletLists -bool { true | false }
+    - configure MailWrap to interpret '- ', '+ ' or '* ' at the start of a
+      paragraph as introducing a bullet item and so indent subsequent lines
+      appropriately. The default is on.
+
+  defaults write uk.me.cdw.MailWrap FixAttribution -bool { true | false }
+    - configure MailWrap to strip the verbose date and time information
+      from the attribution line when composing a reply. The default is on.
+
+  defaults write uk.me.cdw.MailWrap IndentWidth NN
+    - configure MailWrap to increase/decrease plain text indentation by NN
+      spaces when Command-] and Command-[ are used. The default is 2.
+
+  defaults write uk.me.cdw.MailWrap.WrapWidth NN
+    - wrap lines and fill paragraphs at a width of NN characters. The
+      default is 76, which is short enough that Mail won't mangle the
+      message text with a quoted-printable encoding.
+
+
+pbmbox
+------
+
+For command-line users, the MailWrap distribution also includes a small
+utility, pbmbox. When messages are selected and copied in Mail, they are
+added to the clipboard as RFC822MessageDatasPboardType objects. pbmbox
+decodes these objects and emits the messages in unix mbox format on stdout.
+
+To install, copy it to a directory in your PATH and make it executable:
+
+  sudo install -m 0755 pbmbox.py /usr/local/bin/pbmbox
+
+A typical use is importing a patch series from email into a git repository.
+Select the messages in Mail, copy them with Command-C, and then run
+
+  pbmbox | git am
+
+within the repository.
+
+By default, the mboxrd format is used: lines beginning with />*From / are
+quoted with one additional leading '>'. This encoding avoids corruption of
+messages and is always reversible. If the -n or --no-quote-from option is
+given, pbmbox will not attempt to quote 'From  ' lines. This is sometimes
+useful for simple command-line handling of a single message, where no
+ambiguity can result from an unquoted 'From '.
+
+
+Implementation notes
+--------------------
+
+Apple haven't done everything wrong in Mail. Writing this plugin would be
+near-impossible had their mail client not been furnished with a plugin
+interface, albeit an undocumented one. The reading interface is nice, with
+good platform integration, fast full-text search and cross-mailbox
+threading.
+
+Curious readers of the code may be surprised by the long-winded approach
+taken in manipulating the message text. The editor is a WebKit editable
+view, for both rich text (HTML) and plain text messages, and it is certainly
+possible (and more efficient) to directly manipulate and modify the
+underlying DOM tree. However, MailWrap deliberately takes another approach,
+sticking to the simple NSResponder interface which offers simple operations
+such as moveToBeginningOfParagraph:, moveToEndOfParagraphAndModifySelection:
+and insertText:.
+
+This is not due to a perverse desire to use the most awkward interface or
+write the least efficient wrapping code possible! When manipulating the
+message in simple ways that would not possible through the UI, it turns out
+to be very easy to get Mail into a confused state, where for instance the
+message looks fine in the editor but has unintended blank lines when
+rendered to plain text upon sending. The BLOCKQUOTE elements used to
+implement quoting are particularly fussy in this regard.
+
+Even using the NSResponder interfaces, it is necessary to insert a temporary
+padding space at the beginning of a paragraph before selecting and replacing
+the rest of the text to avoid problems with lost quote level on the second
+and subsequent lines of the reformatted paragraph. (Of course, this means
+that this is a bug that can be triggered directly from normal user input at
+the keyboard; I have reproduced and reported it to Apple in this form.)
+
+An additional benefit of sticking to basic interfaces is that they are less
+likely to change, disappear or develop significant bugs in future updates of
+Mail.
+
+
+Copying
+-------
+
+This software was written by Chris Webb <chris@arachsys.com> and is
+distributed as Free Software under the terms of the MIT license in COPYING.
