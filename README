@@ -86,6 +86,10 @@ line Mail inserts when composing a reply, i.e.
 
   Chris Webb <chris@arachsys.com> wrote:
 
+Apple Mail 8.0 has a bug which causes the attribution line to be quoted as
+if it were part of the original message. MailWrap will also fix this whilst
+trimming the attribution line.
+
 This behaviour can be disabled in the preferences.
 
 

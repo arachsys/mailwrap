@@ -175,11 +175,11 @@ class EditingMessageWebView(objc.Category(objc.runtime.EditingMessageWebView)):
         # then remove the placeholder character and position the cursor at
         # the start of the next paragraph block.
 
-        decrease = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
+        item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
             'Decrease', 'changeQuoteLevel:', '')
-        decrease.setTag_(-1)
+        item.setTag_(-1)
         for _ in xrange(level - minimum):
-            self.changeQuoteLevel_(decrease)
+            self.changeQuoteLevel_(item)
 
         selection = self.selectedDOMRange()
         for _ in xrange(text.count('\n')):
@@ -342,12 +342,20 @@ class DocumentEditor(objc.Category(objc.runtime.DocumentEditor)):
                     blockquotes.item_(index).removeStrayLinefeeds()
 
             # If we are configured to fix the attribution string, remove the
-            # 'On DATE, at TIME, ' prefix from the first non-empty line,
-            # which will always be the attribution in an unmodified reply.
+            # 'On DATE, at TIME, ' prefix from the first line, which will
+            # always be the attribution in an unmodified reply. Also ensure
+            # that the attribution and the blank line following it are not
+            # incorrectly quoted by a bug in Mail.app 8.0.
 
             if self._fixAttribution:
                 view.moveToBeginningOfDocument_(None)
                 view.moveToEndOfParagraphAndModifySelection_(None)
+                view.moveForwardAndModifySelection_(None)
+                item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
+                    'Decrease', 'changeQuoteLevel:', '')
+                item.setTag_(-1)
+                view.changeQuoteLevel_(item)
+
                 attribution = view.selectedDOMRange().stringValue()
                 attribution = attribution.rsplit(',', 1)[-1].lstrip()
                 if view.isAutomaticTextReplacementEnabled():
