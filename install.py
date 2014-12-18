@@ -28,6 +28,7 @@ setup(
             CFBundleIdentifier = 'uk.me.cdw.MailWrap',
             CFBundleVersion = '1.0',
             FixAttribution = True,
+            PlaceCursorAtEnd = True,
             NSHumanReadableCopyright = \
                 'Copyright (C) 2014 Chris Webb <chris@arachsys.com>',
             SupportedPluginCompatibilityUUIDs = compatibility_uuids,
