@@ -365,21 +365,28 @@ class DocumentEditor(objc.Category(objc.runtime.DocumentEditor)):
                 else:
                     view.insertText_(attribution)
 
-            # Place the cursor at the end of the quoted text but before the
-            # signature if present, separated from the quoted text by a
-            # blank line.
+            if self._placeCursorAtEnd:
+                # Place the cursor at the end of the quoted text but before
+                # the signature if present, separated from the quoted text by
+                # a blank line.
 
-            signature = document.getElementById_('AppleMailSignature')
-            if signature:
-                range = document.createRange()
-                range.selectNode_(signature)
-                view.setSelectedDOMRange_affinity_(range, 0)
-                view.moveUp_(None)
+                signature = document.getElementById_('AppleMailSignature')
+                if signature:
+                    range = document.createRange()
+                    range.selectNode_(signature)
+                    view.setSelectedDOMRange_affinity_(range, 0)
+                    view.moveUp_(None)
+                else:
+                    view.moveToEndOfDocument_(None)
+
+                view.insertParagraphSeparator_(None)
+                view.insertParagraphSeparator_(None)
             else:
-                view.moveToEndOfDocument_(None)
+                view.moveToBeginningOfDocument_(None)
+                view.insertParagraphSeparator_(None)
+                view.insertParagraphSeparator_(None)
+                view.moveToBeginningOfDocument_(None)
 
-            view.insertParagraphSeparator_(None)
-            view.insertParagraphSeparator_(None)
             view.undoManager().removeAllActions()
             self.backEnd().setHasChanges_(False)
 
@@ -417,6 +424,11 @@ class MailWrap(objc.runtime.MVMailBundle):
             DocumentEditor._fixAttribution = False
         else:
             DocumentEditor._fixAttribution = True
+
+        if bundle.objectForInfoDictionaryKey_('PlaceCursorAtEnd') == False:
+            DocumentEditor._placeCursorAtEnd = False
+        else:
+            DocumentEditor._placeCursorAtEnd = True
 
         indent = bundle.objectForInfoDictionaryKey_('IndentWidth')
         if isinstance(indent, (int, long)):
