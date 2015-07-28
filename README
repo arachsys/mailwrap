@@ -36,7 +36,7 @@ Installation
 MailWrap is currently compatible with Apple Mail 7.0 and later. To install,
 unpack the source tar.gz file, change to the unpacked directory and run
 
-  python install.py
+  /usr/bin/python install.py
 
 Plugin bundles contain a list of UUIDs identifying versions of Mail with
 which they are compatible. The install.py script extracts the correct UUID
