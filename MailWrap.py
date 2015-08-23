@@ -16,17 +16,17 @@ def fill(text, level):
                          initial_indent = ' ' * initial,
                          subsequent_indent = ' ' * subsequent)
 
-def swizzle(cls, sel):
-    def decorator(fun):
-        original = cls.instanceMethodForSelector_(sel)
-        if original.isClassMethod:
-            original = cls.methodForSelector_(sel)
+def swizzle(cls, selector):
+    def decorator(function):
+        old = cls.instanceMethodForSelector_(selector)
+        if old.isClassMethod:
+            old = cls.methodForSelector_(selector)
         def wrapper(self, *args, **kwargs):
-            return fun(self, original, *args, **kwargs)
-        new = objc.selector(wrapper, selector = original.selector,
-                            signature = original.signature,
-                            isClassMethod = original.isClassMethod)
-        objc.classAddMethod(cls, sel, new)
+            return function(self, old, *args, **kwargs)
+        new = objc.selector(wrapper, selector = old.selector,
+                            signature = old.signature,
+                            isClassMethod = old.isClassMethod)
+        objc.classAddMethod(cls, selector, new)
         return wrapper
     return decorator
 
@@ -391,7 +391,7 @@ class MailWrap(objc.runtime.MVMailBundle):
         # 'Fill Text' and Wrap Text' actions to the Edit menu.
 
         application = NSApplication.sharedApplication()
-        bundle  = NSBundle.bundleWithIdentifier_('uk.me.cdw.MailWrap')
+        bundle = NSBundle.bundleWithIdentifier_('uk.me.cdw.MailWrap')
         cls.registerBundle()
 
         editmenu = application.mainMenu().itemAtIndex_(2).submenu()
