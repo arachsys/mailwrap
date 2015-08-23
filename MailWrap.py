@@ -1,5 +1,5 @@
-from AppKit import *
-from Foundation import *
+from AppKit import NSAlternateKeyMask, NSApplication, NSBundle, \
+    NSCommandKeyMask, NSLog, NSMenuItem
 import objc
 import textwrap
 
