@@ -8,26 +8,38 @@ indentation functions to work in plain text mode.
 
 Mail was once quite a good 'net citizen. It could be configured to generate
 plain text email, and would do so with the text neatly wrapped at 76
-columns. It used the RFC2646 format=flowed extension to indicate that these
-wrapped paragraphs could be reflowed using trailing spaces. Mailing list
+columns. In addition, it used the RFC2646 format=flowed extension to
+indicate that these wrapped paragraphs could be reflowed. Thus mailing list
 archives and traditional mail clients saw readable 80-column text without
 noisy encoding, but more sophisticated readers could re-fill the paragraphs
 to suit the display width.
 
-However, in line with the near-universal decline in software quality over
-time, recent versions of Mail now treat paragraphs as a single long line.
-They mangle messages with a quoted-printable encoding if necessary to meet
-RFC line-length requirements. The resulting email leaves a very visible mess
-in mailing list archives on web, as well as drawing understandable ire from
-recipients with traditional unix mail clients.
+Unfortunately, Mail is poorly maintained and has declined in quality over
+recent years, with many bugs introduced and incompetent design choices made.
+Current releases have ditched format=flowed for plain text parts, instead
+opting to emit each paragraph as a single long line. If this is longer than
+77 characters, the text is mangled with a quoted-printable transfer
+encoding. The resulting email leaves a very visible mess in mailing list
+archives on the web, as well as drawing understandable ire from recipients
+with traditional unix mail clients.
 
 Fortunately, even if Mac users find themselves drawn to Apple Mail for its
 convenient reading interface and good platform integration, all is not lost.
-Provided lines do not exceed 77 characters in length, Mail won't encode your
-outgoing messages as quoted-printable, resulting in a perfectly acceptable
-plain text message that won't embarrass you in public. Manual paragraph
-filling is tedious and time-consuming, but the MailWrap plugin can help
-automate the job.
+If lines are no longer than 77 characters, Mail won't use quoted-printable
+in your outgoing messages, resulting in perfectly acceptable plain text
+email that won't embarrass you in public. Manual paragraph filling is
+tedious and time-consuming, but the MailWrap plugin can help automate the
+job.
+
+An alternative, more automatic solution to the same problem is implemented
+in the MailFlow plugin, which reimplements format=flowed in Mail and
+eliminates quoted-printable plain text email under most circumstances. It is
+available from
+
+  https://github.com/arachsys/mailflow
+  https://bitbucket.org/arachsys/mailflow
+
+alongside this plugin.
 
 
 Installation
@@ -116,8 +128,8 @@ These can be set at the command line with the OS X defaults command:
 
   defaults write com.apple.mail MailWrap -dict-add WrapWidth -int NN
     - wrap lines and fill paragraphs at a width of NN characters. The
-      default is 76, which is short enough that Mail won't mangle the
-      message text with a quoted-printable encoding.
+      default is 76, which is short enough that Mail won't inflict a
+      quoted-printable transfer encoding on the message text.
 
 
 pbmbox
