@@ -96,23 +96,25 @@ This behaviour can be disabled in the preferences.
 Configuration
 -------------
 
-MailWrap reads a handful of preferences from the uk.me.cdw.MailWrap domain.
+MailWrap reads a handful of preferences from the com.apple.mail domain.
 These can be set at the command line with the OS X defaults command:
 
-  defaults write uk.me.cdw.MailWrap BulletLists -bool { true | false }
+  defaults write com.apple.mail MailWrap -dict-add BulletLists -bool false
+  defaults write com.apple.mail MailWrap -dict-add BulletLists -bool true
     - configure MailWrap to interpret '- ', '+ ' or '* ' at the start of a
       paragraph as introducing a bullet item and so indent subsequent lines
       appropriately. The default is on.
 
-  defaults write uk.me.cdw.MailWrap FixAttribution -bool { true | false }
+  defaults write com.apple.mail MailWrap -dict-add FixAttribution -bool false
+  defaults write com.apple.mail MailWrap -dict-add FixAttribution -bool true
     - configure MailWrap to strip the verbose date and time information
       from the attribution line when composing a reply. The default is on.
 
-  defaults write uk.me.cdw.MailWrap IndentWidth NN
+  defaults write com.apple.mail MailWrap -dict-add IndentWidth -int NN
     - configure MailWrap to increase/decrease plain text indentation by NN
       spaces when Command-] and Command-[ are used. The default is 2.
 
-  defaults write uk.me.cdw.MailWrap.WrapWidth NN
+  defaults write com.apple.mail MailWrap -dict-add WrapWidth -int NN
     - wrap lines and fill paragraphs at a width of NN characters. The
       default is 76, which is short enough that Mail won't mangle the
       message text with a quoted-printable encoding.

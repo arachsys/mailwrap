@@ -1,5 +1,5 @@
 from AppKit import NSAlternateKeyMask, NSApplication, NSBundle, \
-    NSCommandKeyMask, NSLog, NSMenuItem
+    NSCommandKeyMask, NSLog, NSMenuItem, NSUserDefaults
 import objc
 import textwrap
 
@@ -408,27 +408,12 @@ class MailWrap(objc.runtime.MVMailBundle):
         # Read our configuration settings if present. Otherwise, set the
         # correct default values.
 
-        if bundle.objectForInfoDictionaryKey_('BulletLists') == False:
-            EditingMessageWebView._bulletLists = False
-        else:
-            EditingMessageWebView._bulletLists = True
-
-        if bundle.objectForInfoDictionaryKey_('FixAttribution') == False:
-            DocumentEditor._fixAttribution = False
-        else:
-            DocumentEditor._fixAttribution = True
-
-        indent = bundle.objectForInfoDictionaryKey_('IndentWidth')
-        if isinstance(indent, (int, long)):
-            EditingMessageWebView._indentWidth = width
-        else:
-            EditingMessageWebView._indentWidth = 2
-
-        width = bundle.objectForInfoDictionaryKey_('WrapWidth')
-        if isinstance(width, (int, long)):
-            EditingMessageWebView._wrapWidth = width
-        else:
-            EditingMessageWebView._wrapWidth = 76
+        defaults = NSUserDefaults.standardUserDefaults()
+        defaults = defaults.dictionaryForKey_('MailWrap') or {}
+        DocumentEditor._fixAttribution = defaults.get('FixAttribution', True)
+        EditingMessageWebView._bulletLists = defaults.get('BulletLists', True)
+        EditingMessageWebView._indentWidth = int(defaults.get('IndentWidth', 2))
+        EditingMessageWebView._wrapWidth = int(defaults.get('WrapWidth', 76))
 
         # Report the plugin name and version to the com.apple.mail log.
 

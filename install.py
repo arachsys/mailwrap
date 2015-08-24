@@ -27,11 +27,9 @@ setup(
         plist = dict(
             CFBundleIdentifier = 'uk.me.cdw.MailWrap',
             CFBundleVersion = '1.0',
-            FixAttribution = True,
             NSHumanReadableCopyright = \
-                'Copyright (C) 2014 Chris Webb <chris@arachsys.com>',
-            SupportedPluginCompatibilityUUIDs = compatibility_uuids,
-            WrapColumns = 76
+                'Copyright (C) 2015 Chris Webb <chris@arachsys.com>',
+            SupportedPluginCompatibilityUUIDs = compatibility_uuids
         ),
         semi_standalone = True,
     )),
