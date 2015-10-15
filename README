@@ -1,10 +1,10 @@
 MailWrap
 ========
 
-MailWrap is a plugin for Apple Mail on OS X, making it easier to compose
-well-formed and correctly wrapped plain text messages. It introduces line
-wrapping and paragraph filling operations, and extends the built-in
-indentation functions to work in plain text mode.
+MailWrap is a plugin for Apple Mail on OS X 10.11 and later, making it
+easier to compose well-formed and correctly wrapped plain text messages. It
+introduces line wrapping and paragraph filling operations, and extends the
+built-in indentation functions to work in plain text mode.
 
 Mail was once quite a good 'net citizen. It could be configured to generate
 plain text email, and would do so with the text neatly wrapped at 76
@@ -45,10 +45,24 @@ alongside this plugin.
 Installation
 ------------
 
-MailWrap is currently compatible with Apple Mail 7.0 and later. To install,
+MailWrap is currently compatible with Apple Mail 9.0 and later. To install,
 unpack the source tar.gz file, change to the unpacked directory and run
 
   /usr/bin/python install.py
+
+However, Apple carelessly broke their bundled py2app when implementing the
+System Integrity Protection feature in OS X 10.11 'El Capitan'. Until this
+is fixed, you first need to disable SIP by booting into recovery mode and
+running 'csrutil disable', then boot back into OS X and remove the
+'restricted' flag from the system Python install with
+
+  sudo chflags -R norestricted /System/Library/Frameworks/Python.framework
+
+Alternatively,
+
+  sudo chflags -R norestricted /
+
+will clear the 'restricted' file flags from the entire system.
 
 Plugin bundles contain a list of UUIDs identifying versions of Mail with
 which they are compatible. The install.py script extracts the correct UUID
@@ -98,9 +112,9 @@ line Mail inserts when composing a reply, i.e.
 
   Chris Webb <chris@arachsys.com> wrote:
 
-Apple Mail 8.0 has a bug which causes the attribution line to be quoted as
-if it were part of the original message. MailWrap will also fix this whilst
-trimming the attribution line.
+Since version 8.0, Mail has a bug which causes the attribution line to be
+quoted as if it were part of the original message. MailFlow will also fix
+this whilst trimming the attribution line.
 
 This behaviour can be disabled in the preferences.
 

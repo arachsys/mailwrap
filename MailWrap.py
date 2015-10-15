@@ -38,8 +38,8 @@ def swizzle(classname, selector):
     return decorator
 
 
-class DocumentEditor(Category('DocumentEditor')):
-    @swizzle('DocumentEditor', 'finishLoadingEditor')
+class ComposeViewController(Category('ComposeViewController')):
+    @swizzle('ComposeViewController', 'finishLoadingEditor')
     def finishLoadingEditor(self, original):
         # Let Mail.app complete its own preparation of the new message and
         # the document editor before we do our own cleanups.
@@ -96,11 +96,34 @@ class DocumentEditor(Category('DocumentEditor')):
                 view.moveUp_(None)
             else:
                 view.moveToEndOfDocument_(None)
+                view.insertParagraphSeparator_(None)
 
             view.insertParagraphSeparator_(None)
-            view.insertParagraphSeparator_(None)
             view.undoManager().removeAllActions()
+            self.setHasUserMadeChanges_(False)
             self.backEnd().setHasChanges_(False)
+
+        return result
+
+    @swizzle('ComposeViewController', 'show')
+    def show(self, old):
+        # Mail 9.0 repositions the cursor at the start of the message after
+        # we've fixed quoting and attribution. Put it back after the quoted
+        # material when the compose window is displayed.
+
+        result = old(self)
+        if self.messageType() in [1, 2]:
+            view = self.composeWebView()
+            document = view.mainFrame().DOMDocument()
+            signature = document.getElementById_('AppleMailSignature')
+            if signature:
+                range = document.createRange()
+                range.selectNode_(signature)
+                view.setSelectedDOMRange_affinity_(range, 0)
+                view.moveUp_(None)
+            else:
+                view.moveToEndOfDocument_(None)
+        return result
 
 
 class EditingMessageWebView(Category('EditingMessageWebView')):
@@ -417,7 +440,7 @@ class MailWrap(Class('MVMailBundle')):
 
         defaults = NSUserDefaults.standardUserDefaults()
         defaults = defaults.dictionaryForKey_('MailWrap') or {}
-        DocumentEditor._fixAttribution = defaults.get('FixAttribution', True)
+        ComposeViewController._fixAttribution = defaults.get('FixAttribution', True)
         EditingMessageWebView._bulletLists = defaults.get('BulletLists', True)
         EditingMessageWebView._indentWidth = int(defaults.get('IndentWidth', 2))
         EditingMessageWebView._wrapWidth = int(defaults.get('WrapWidth', 76))

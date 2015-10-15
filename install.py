@@ -7,8 +7,8 @@ install_path = os.environ["HOME"] + '/Library/Mail/Bundles'
 mail_path = '/Applications/Mail.app/Contents/Info'
 
 command = 'defaults read %s CFBundleShortVersionString' % mail_path
-if tuple(map(int, os.popen(command).read().strip().split('.'))) < (7, 0):
-    sys.stderr.write("MailWrap requires Apple Mail 7.0 or later\n")
+if tuple(map(int, os.popen(command).read().strip().split('.'))) < (9, 0):
+    sys.stderr.write("MailWrap requires Apple Mail 9.0 or later\n")
     sys.exit(1)
 
 command = 'defaults read %s PluginCompatibilityUUID' % mail_path
@@ -39,7 +39,6 @@ sys.stdout.close()
 sys.stdout = sys.__stdout__
 print 'Installed compatible MailWrap.mailbundle in %s' % install_path
 
-os.system('defaults write com.apple.mail BundleCompatibilityVersion 7')
 os.system('defaults write com.apple.mail EnableBundles -bool true')
 os.system('rm -f -r ~/Library/Mail/Bundles\\ \\(Disabled\\)/MailWrap.*')
 os.system('rmdir ~/Library/Mail/Bundles\\ \\(Disabled\\) 2>/dev/null')
