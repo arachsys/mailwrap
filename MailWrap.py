@@ -3,6 +3,12 @@ from AppKit import NSAlternateKeyMask, NSApplication, NSBundle, \
 import objc
 import textwrap
 
+def Category(classname):
+    return objc.Category(objc.lookUpClass(classname))
+
+def Class(classname):
+    return objc.lookUpClass(classname)
+
 def fill(text, level):
     initial = subsequent = len(text) - len(text.lstrip())
     width = EditingMessageWebView._wrapWidth
@@ -16,8 +22,9 @@ def fill(text, level):
                          initial_indent = ' ' * initial,
                          subsequent_indent = ' ' * subsequent)
 
-def swizzle(cls, selector):
+def swizzle(classname, selector):
     def decorator(function):
+        cls = objc.lookUpClass(classname)
         old = cls.instanceMethodForSelector_(selector)
         if old.isClassMethod:
             old = cls.methodForSelector_(selector)
@@ -31,8 +38,73 @@ def swizzle(cls, selector):
     return decorator
 
 
-class EditingMessageWebView(objc.Category(objc.runtime.EditingMessageWebView)):
-    @swizzle(objc.runtime.EditingMessageWebView, 'decreaseIndentation:')
+class DocumentEditor(Category('DocumentEditor')):
+    @swizzle('DocumentEditor', 'finishLoadingEditor')
+    def finishLoadingEditor(self, original):
+        # Let Mail.app complete its own preparation of the new message and
+        # the document editor before we do our own cleanups.
+
+        original(self)
+
+        if self.messageType() in [1, 2]:
+            # We only modify messages resulting from a reply or reply-to-all
+            # action. Begin by stripping stray blank lines at the beginning
+            # of the message body and around cited text.
+
+            view = self.composeWebView()
+            document = view.mainFrame().DOMDocument()
+
+            view.contentElement().removeStrayLinefeeds()
+            blockquotes = document.getElementsByTagName_('BLOCKQUOTE')
+            for index in xrange(blockquotes.length()):
+                if blockquotes.item_(index):
+                    blockquotes.item_(index).removeStrayLinefeeds()
+
+            # If we are configured to fix the attribution string, remove the
+            # 'On DATE, at TIME, ' prefix from the first line, which will
+            # always be the attribution in an unmodified reply. Also ensure
+            # that the attribution and the blank line following it are not
+            # incorrectly quoted by a bug in Mail.app 8.0.
+
+            if self._fixAttribution:
+                view.moveToBeginningOfDocument_(None)
+                view.moveToEndOfParagraphAndModifySelection_(None)
+                view.moveForwardAndModifySelection_(None)
+                item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
+                    'Decrease', 'changeQuoteLevel:', '')
+                item.setTag_(-1)
+                view.changeQuoteLevel_(item)
+
+                attribution = view.selectedDOMRange().stringValue()
+                attribution = attribution.rsplit(',', 1)[-1].lstrip()
+                if view.isAutomaticTextReplacementEnabled():
+                    view.setAutomaticTextReplacementEnabled_(False)
+                    view.insertText_(attribution)
+                    view.setAutomaticTextReplacementEnabled_(True)
+                else:
+                    view.insertText_(attribution)
+
+            # Place the cursor at the end of the quoted text but before the
+            # signature if present, separated from the quoted text by a
+            # blank line.
+
+            signature = document.getElementById_('AppleMailSignature')
+            if signature:
+                range = document.createRange()
+                range.selectNode_(signature)
+                view.setSelectedDOMRange_affinity_(range, 0)
+                view.moveUp_(None)
+            else:
+                view.moveToEndOfDocument_(None)
+
+            view.insertParagraphSeparator_(None)
+            view.insertParagraphSeparator_(None)
+            view.undoManager().removeAllActions()
+            self.backEnd().setHasChanges_(False)
+
+
+class EditingMessageWebView(Category('EditingMessageWebView')):
+    @swizzle('EditingMessageWebView', 'decreaseIndentation:')
     def decreaseIndentation_(self, original, sender):
         # Call the original Mail.app decreaseIndentation: selector for rich
         # text messages.
@@ -217,7 +289,7 @@ class EditingMessageWebView(objc.Category(objc.runtime.EditingMessageWebView)):
             self.deleteBackward_(None)
         self.undoManager().endUndoGrouping()
 
-    @swizzle(objc.runtime.EditingMessageWebView, 'increaseIndentation:')
+    @swizzle('EditingMessageWebView', 'increaseIndentation:')
     def increaseIndentation_(self, original, sender):
         # Call the original Mail.app increaseIndentation: selector for rich
         # text messages.
@@ -319,72 +391,7 @@ class EditingMessageWebView(objc.Category(objc.runtime.EditingMessageWebView)):
         self.undoManager().endUndoGrouping()
 
 
-class DocumentEditor(objc.Category(objc.runtime.DocumentEditor)):
-    @swizzle(objc.runtime.DocumentEditor, 'finishLoadingEditor')
-    def finishLoadingEditor(self, original):
-        # Let Mail.app complete its own preparation of the new message and
-        # the document editor before we do our own cleanups.
-
-        original(self)
-
-        if self.messageType() in [1, 2]:
-            # We only modify messages resulting from a reply or reply-to-all
-            # action. Begin by stripping stray blank lines at the beginning
-            # of the message body and around cited text.
-
-            view = self.webView()
-            document = view.mainFrame().DOMDocument()
-
-            view.contentElement().removeStrayLinefeeds()
-            blockquotes = document.getElementsByTagName_('BLOCKQUOTE')
-            for index in xrange(blockquotes.length()):
-                if blockquotes.item_(index):
-                    blockquotes.item_(index).removeStrayLinefeeds()
-
-            # If we are configured to fix the attribution string, remove the
-            # 'On DATE, at TIME, ' prefix from the first line, which will
-            # always be the attribution in an unmodified reply. Also ensure
-            # that the attribution and the blank line following it are not
-            # incorrectly quoted by a bug in Mail.app 8.0.
-
-            if self._fixAttribution:
-                view.moveToBeginningOfDocument_(None)
-                view.moveToEndOfParagraphAndModifySelection_(None)
-                view.moveForwardAndModifySelection_(None)
-                item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
-                    'Decrease', 'changeQuoteLevel:', '')
-                item.setTag_(-1)
-                view.changeQuoteLevel_(item)
-
-                attribution = view.selectedDOMRange().stringValue()
-                attribution = attribution.rsplit(',', 1)[-1].lstrip()
-                if view.isAutomaticTextReplacementEnabled():
-                    view.setAutomaticTextReplacementEnabled_(False)
-                    view.insertText_(attribution)
-                    view.setAutomaticTextReplacementEnabled_(True)
-                else:
-                    view.insertText_(attribution)
-
-            # Place the cursor at the end of the quoted text but before the
-            # signature if present, separated from the quoted text by a
-            # blank line.
-
-            signature = document.getElementById_('AppleMailSignature')
-            if signature:
-                range = document.createRange()
-                range.selectNode_(signature)
-                view.setSelectedDOMRange_affinity_(range, 0)
-                view.moveUp_(None)
-            else:
-                view.moveToEndOfDocument_(None)
-
-            view.insertParagraphSeparator_(None)
-            view.insertParagraphSeparator_(None)
-            view.undoManager().removeAllActions()
-            self.backEnd().setHasChanges_(False)
-
-
-class MailWrap(objc.runtime.MVMailBundle):
+class MailWrap(Class('MVMailBundle')):
     @classmethod
     def initialize(cls):
         # Register ourselves as a Mail.app plugin and add an entry for our
