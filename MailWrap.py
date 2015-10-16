@@ -47,7 +47,7 @@ class ComposeViewController(Category('ComposeViewController')):
 
         original(self)
 
-        if self.messageType() in [1, 2]:
+        if self.messageType() in [1, 2, 8]:
             # We only modify messages resulting from a reply or reply-to-all
             # action. Begin by stripping stray blank lines at the beginning
             # of the message body and around cited text.
@@ -113,7 +113,7 @@ class ComposeViewController(Category('ComposeViewController')):
         # material when the compose window is displayed.
 
         result = old(self)
-        if self.messageType() in [1, 2]:
+        if self.messageType() in [1, 2, 8]:
             view = self.composeWebView()
             document = view.mainFrame().DOMDocument()
             signature = document.getElementById_('AppleMailSignature')
