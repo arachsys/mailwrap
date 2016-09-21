@@ -1,7 +1,7 @@
 MailWrap
 ========
 
-MailWrap is a plugin for Apple Mail on OS X 10.11 and later, making it
+MailWrap is a plugin for Apple Mail on OS X 10.12 and later, making it
 easier to compose well-formed and correctly wrapped plain text messages. It
 introduces line wrapping and paragraph filling operations, and extends the
 built-in indentation functions to work in plain text mode.
@@ -45,14 +45,15 @@ alongside this plugin.
 Installation
 ------------
 
-MailWrap is currently compatible with Apple Mail 9.0 and later. To install,
+MailWrap is currently compatible with Apple Mail 10.0 and later. To install,
 unpack the source tar.gz file, change to the unpacked directory and run
 
   /usr/bin/python install.py
 
 However, Apple carelessly broke their bundled py2app when implementing the
-System Integrity Protection feature in OS X 10.11 'El Capitan'. Until this
-is fixed, you first need to disable SIP by booting into recovery mode and
+System Integrity Protection feature in OS X 10.11 'El Capitan'. It is still
+broken in macOS 10.12 'Sierra' despite numerous bug reports. Until this is
+fixed, you first need to disable SIP by booting into recovery mode and
 running 'csrutil disable', then boot back into OS X and remove the
 'restricted' flag from the system Python install with
 

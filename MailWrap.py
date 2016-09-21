@@ -40,12 +40,12 @@ def swizzle(classname, selector):
 
 
 class ComposeViewController(Category('ComposeViewController')):
-    @swizzle('ComposeViewController', 'finishLoadingEditor')
-    def finishLoadingEditor(self, original):
+    @swizzle('ComposeViewController', '_finishLoadingEditor')
+    def _finishLoadingEditor(self, original):
         # Let Mail.app complete its own preparation of the new message and
         # the document editor before we do our own cleanups.
 
-        original(self)
+        result = original(self)
 
         if self.messageType() in [1, 2, 8]:
             # We only modify messages resulting from a reply or reply-to-all
