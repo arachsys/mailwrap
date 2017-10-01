@@ -2,7 +2,15 @@ from distutils.core import setup
 import os
 import platform
 import py2app
+import shutil
 import sys
+
+def copystat(src, dst):
+    st = os.stat(src)
+    mode = shutil.stat.S_IMODE(st.st_mode)
+    os.utime(dst, (st.st_atime, st.st_mtime))
+    os.chmod(dst, mode)
+shutil.copystat = copystat
 
 install_path = os.environ["HOME"] + '/Library/Mail/Bundles'
 mail_path = '/Applications/Mail.app/Contents/Info'

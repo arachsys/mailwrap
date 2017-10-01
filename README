@@ -50,21 +50,6 @@ unpack the source tar.gz file, change to the unpacked directory and run
 
   /usr/bin/python install.py
 
-However, Apple carelessly broke their bundled py2app when implementing the
-System Integrity Protection feature in OS X 10.11 'El Capitan'. It is still
-broken in macOS 10.12 'Sierra' despite numerous bug reports. Until this is
-fixed, you first need to disable SIP by booting into recovery mode and
-running 'csrutil disable', then boot back into OS X and remove the
-'restricted' flag from the system Python install with
-
-  sudo chflags -R norestricted /System/Library/Frameworks/Python.framework
-
-Alternatively,
-
-  sudo chflags -R norestricted /
-
-will clear the 'restricted' file flags from the entire system.
-
 Plugin bundles contain a list of UUIDs identifying versions of Mail with
 which they are compatible. The install.py script extracts the correct UUID
 from the installed version of Mail, generates a MailWrap.bundle to match,
