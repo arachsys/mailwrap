@@ -22,7 +22,7 @@ if tuple(map(int, os.popen(command).read().strip().split('.'))) < (10, 0):
 
 command = 'defaults read %s PluginCompatibilityUUID' % mail_path
 compatibility_uuids = [ os.popen(command).read().strip() ]
-version = platform.mac_ver()[0]
+version = '.'.join(platform.mac_ver()[0].split('.')[:2])
 
 sys.argv[1:] = ['py2app'] + sys.argv[1:]
 sys.stdout = open(os.devnull, 'w')
