@@ -15,6 +15,10 @@ shutil.copystat = copystat
 install_path = os.environ["HOME"] + '/Library/Mail/Bundles'
 mail_path = '/Applications/Mail.app/Contents/Info'
 
+version = '.'.join(platform.mac_ver()[0].split('.')[:2])
+if float(version) >= 10.15:
+    mail_path = '/System' + mail_path
+
 command = 'defaults read %s CFBundleShortVersionString' % mail_path
 if tuple(map(int, os.popen(command).read().strip().split('.'))) < (10, 0):
     sys.stderr.write("MailWrap requires Apple Mail 10.0 or later\n")
@@ -22,7 +26,6 @@ if tuple(map(int, os.popen(command).read().strip().split('.'))) < (10, 0):
 
 command = 'defaults read %s PluginCompatibilityUUID' % mail_path
 compatibility_uuids = [ os.popen(command).read().strip() ]
-version = '.'.join(platform.mac_ver()[0].split('.')[:2])
 
 sys.argv[1:] = ['py2app'] + sys.argv[1:]
 sys.stdout = open(os.devnull, 'w')
