@@ -13,7 +13,10 @@ def copystat(src, dst):
 shutil.copystat = copystat
 
 install_path = os.environ["HOME"] + '/Library/Mail/Bundles'
-mail_path = '/Applications/Mail.app/Contents/Info'
+if os.path.exists('/System/Applications/Mail.app'):
+    mail_path = '/System/Applications/Mail.app/Contents/Info'
+else:
+    mail_path = '/Applications/Mail.app/Contents/Info'
 
 command = 'defaults read %s CFBundleShortVersionString' % mail_path
 if tuple(map(int, os.popen(command).read().strip().split('.'))) < (10, 0):
