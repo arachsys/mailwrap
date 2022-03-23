@@ -26,9 +26,12 @@ def fill(text, level):
 def swizzle(classname, selector):
     def decorator(function):
         cls = objc.lookUpClass(classname)
-        old = cls.instanceMethodForSelector_(selector)
-        if old.isClassMethod:
-            old = cls.methodForSelector_(selector)
+        try:
+            old = cls.instanceMethodForSelector_(selector)
+            if old.isClassMethod:
+                old = cls.methodForSelector_(selector)
+        except:
+            return None
         def wrapper(self, *args, **kwargs):
             return function(self, old, *args, **kwargs)
         new = objc.selector(wrapper, selector = old.selector,
@@ -40,7 +43,7 @@ def swizzle(classname, selector):
 
 
 class ComposeViewController(Category('ComposeViewController')):
-    @swizzle('ComposeViewController', '_finishLoadingEditor')
+    @swizzle('ComposeViewController', b'_finishLoadingEditor')
     def _finishLoadingEditor(self, original):
         # Let Mail.app complete its own preparation of the new message and
         # the document editor before we do our own cleanups.
@@ -57,7 +60,7 @@ class ComposeViewController(Category('ComposeViewController')):
 
             view.contentElement().removeStrayLinefeeds()
             blockquotes = document.getElementsByTagName_('BLOCKQUOTE')
-            for index in xrange(blockquotes.length()):
+            for index in range(blockquotes.length()):
                 if blockquotes.item_(index):
                     blockquotes.item_(index).removeStrayLinefeeds()
 
@@ -91,9 +94,9 @@ class ComposeViewController(Category('ComposeViewController')):
 
             signature = document.getElementById_('AppleMailSignature')
             if signature:
-                range = document.createRange()
-                range.selectNode_(signature)
-                view.setSelectedDOMRange_affinity_(range, 0)
+                domrange = document.createRange()
+                domrange.selectNode_(signature)
+                view.setSelectedDOMRange_affinity_(domrange, 0)
                 view.moveUp_(None)
             else:
                 view.moveToEndOfDocument_(None)
@@ -106,7 +109,7 @@ class ComposeViewController(Category('ComposeViewController')):
 
         return result
 
-    @swizzle('ComposeViewController', 'show')
+    @swizzle('ComposeViewController', b'show')
     def show(self, old):
         # Mail 9.0 repositions the cursor at the start of the message after
         # we've fixed quoting and attribution. Put it back after the quoted
@@ -118,9 +121,9 @@ class ComposeViewController(Category('ComposeViewController')):
             document = view.mainFrame().DOMDocument()
             signature = document.getElementById_('AppleMailSignature')
             if signature:
-                range = document.createRange()
-                range.selectNode_(signature)
-                view.setSelectedDOMRange_affinity_(range, 0)
+                domrange = document.createRange()
+                domrange.selectNode_(signature)
+                view.setSelectedDOMRange_affinity_(domrange, 0)
                 view.moveUp_(None)
             else:
                 view.moveToEndOfDocument_(None)
@@ -128,7 +131,7 @@ class ComposeViewController(Category('ComposeViewController')):
 
 
 class EditingMessageWebView(Category('EditingMessageWebView')):
-    @swizzle('EditingMessageWebView', 'decreaseIndentation:')
+    @swizzle('EditingMessageWebView', b'decreaseIndentation:')
     def decreaseIndentation_(self, original, sender):
         # Call the original Mail.app decreaseIndentation: selector for rich
         # text messages.
@@ -146,7 +149,7 @@ class EditingMessageWebView(Category('EditingMessageWebView')):
         selection = self.selectedDOMRange()
         self.moveToBeginningOfParagraph_(None)
         if selection.collapsed():
-            for _ in xrange(self._indentWidth):
+            for _ in range(self._indentWidth):
                 self.moveForwardAndModifySelection_(None)
             text = self.selectedDOMRange().stringValue() or ''
             if re.match(u'[ \xa0]{%d}' % self._indentWidth, text, re.UNICODE):
@@ -154,7 +157,7 @@ class EditingMessageWebView(Category('EditingMessageWebView')):
         else:
             while selection.compareBoundaryPoints__(1, # START_TO_END
                     self.selectedDOMRange()) > 0:
-                for _ in xrange(self._indentWidth):
+                for _ in range(self._indentWidth):
                     self.moveForwardAndModifySelection_(None)
                 text = self.selectedDOMRange().stringValue() or ''
                 if re.match(u'[ \xa0]{%d}' % self._indentWidth, text,
@@ -266,11 +269,11 @@ class EditingMessageWebView(Category('EditingMessageWebView')):
         item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
             'Decrease', 'changeQuoteLevel:', '')
         item.setTag_(-1)
-        for _ in xrange(level - minimum):
+        for _ in range(level - minimum):
             self.changeQuoteLevel_(item)
 
         selection = self.selectedDOMRange()
-        for _ in xrange(text.count('\n')):
+        for _ in range(text.count('\n')):
             self.moveUp_(None)
             self.moveToBeginningOfParagraph_(None)
         self.deleteForward_(None)
@@ -305,7 +308,7 @@ class EditingMessageWebView(Category('EditingMessageWebView')):
             self.deleteBackward_(None)
         self.undoManager().endUndoGrouping()
 
-    @swizzle('EditingMessageWebView', 'increaseIndentation:')
+    @swizzle('EditingMessageWebView', b'increaseIndentation:')
     def increaseIndentation_(self, original, sender):
         # Call the original Mail.app increaseIndentation: selector for rich
         # text messages.
@@ -325,7 +328,7 @@ class EditingMessageWebView(Category('EditingMessageWebView')):
             self.moveToBeginningOfParagraph_(None)
             position -= self.selectedRange().location
             self.insertText_(self._indentWidth * u' ')
-            for _ in xrange(position):
+            for _ in range(position):
                 self.moveForward_(None)
         else:
             self.moveToBeginningOfParagraph_(None)
