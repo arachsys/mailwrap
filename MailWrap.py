@@ -64,21 +64,21 @@ class ComposeViewController(Category('ComposeViewController')):
                 if blockquotes.item_(index):
                     blockquotes.item_(index).removeStrayLinefeeds()
 
-            # If we are configured to fix the attribution string, remove the
+            # Ensure that the attribution and the blank line following it
+            # are not incorrectly quoted by a bug in Mail.app 8.0. If we
+            # are configured to fix the attribution string, remove the
             # 'On DATE, at TIME, ' prefix from the first line, which will
-            # always be the attribution in an unmodified reply. Also ensure
-            # that the attribution and the blank line following it are not
-            # incorrectly quoted by a bug in Mail.app 8.0.
+            # always be the attribution in an unmodified reply.
+
+            view.moveToBeginningOfDocument_(None)
+            view.moveToEndOfParagraphAndModifySelection_(None)
+            view.moveForwardAndModifySelection_(None)
+            item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
+                'Decrease', 'changeQuoteLevel:', '')
+            item.setTag_(-1)
+            view.changeQuoteLevel_(item)
 
             if self._fixAttribution:
-                view.moveToBeginningOfDocument_(None)
-                view.moveToEndOfParagraphAndModifySelection_(None)
-                view.moveForwardAndModifySelection_(None)
-                item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
-                    'Decrease', 'changeQuoteLevel:', '')
-                item.setTag_(-1)
-                view.changeQuoteLevel_(item)
-
                 attribution = view.selectedDOMRange().stringValue()
                 attribution = attribution.split(u',', 2)[-1].lstrip()
                 if view.isAutomaticTextReplacementEnabled():
