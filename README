@@ -73,8 +73,14 @@ authorised before it will work. To do this, run
 after running the install.py script. Many thanks to A. Wilcox (awilfox) for
 providing these signing instructions on their Cat Fox Life blog.
 
-If you use the system Python 2.7 on macOS 11.0 or later, you will also need
-to set SYSTEM_VERSION_COMPAT=0 in the environment when running install.py:
+If the sandbox doesn't allow Mail.app to read the directory where your
+Python is installed, you may need to change 'semi_standalone' to False in
+the setup options in install.py. This issue doesn't affect /usr/bin/python
+or /usr/bin/python3, but has been reported with Homebrew Python running
+from /opt/homebrew/bin/python3 and /opt/homebrew/Cellar/python@3.x/.
+
+If you use the system Python 2.7 on macOS 11.0 or later, you will need to
+set SYSTEM_VERSION_COMPAT=0 in the environment when running install.py:
 
   SYSTEM_VERSION_COMPAT=0 /usr/bin/python install.py
 
