@@ -1,7 +1,7 @@
 MailWrap
 ========
 
-MailWrap is a plugin for Apple Mail on macOS 10.12 and later, making it
+MailWrap is a plugin for Apple Mail on macOS 10.12 to 12.x, making it
 easier to compose well-formed and correctly wrapped plain text messages. It
 introduces line wrapping and paragraph filling operations, and extends the
 built-in indentation functions to work in plain text mode.
@@ -42,12 +42,34 @@ available from
 alongside this plugin. The two plugins can now happily coexist.
 
 
+Compatibility
+-------------
+
+MailWrap is currently compatible with Apple Mail 10.0 to 15.x included in
+macOS 10.12 (Sierra) to 12.x (Monterey).
+
+It does not yet support Mail 16.x included in macOS 13.x (Ventura). This
+makes major changes to the message editor, requiring non-trivial fixes to
+the way MailWrap hooks into the composer. In particular, it is no longer
+obvious how to access the message DOM tree, which MailWrap relies on to
+correct attribution lines, detect plain text mode and extend indentation.
+
+I do not use macOS apart from maintaining MailFlow and MailWrap, and only
+have occasional access to machines running the most recent versions. As far
+as I can tell, the class-dump utility which I relied on to develop MailWrap
+is also broken by the latest OS release. I would welcome input from anyone
+with better insight into the Mail.app changes, or just with more patience
+to reverse-engineer its internals once again. Please do get in touch with
+Chris Webb <chris@arachsys.com>.
+
+
 Installation
 ------------
 
-MailWrap is currently compatible with Apple Mail 10.0 and later. To install,
-clone the git repository or unpack the source tar.gz file, change to the
-source directory and run 'python install.py' or 'python3 install.py'.
+To install, clone the git repository or unpack the source tar.gz, change to
+the source directory and run 'python install.py' or 'python3 install.py'.
+Your terminal will need access to ~/Library/Mail/Bundles/ which you can
+grant in the Privacy and Security tab of System Settings.
 
 The installer and plugin work with both the system Python 2.7 and more
 recent Python 3.x, but py2app and pyobjc are required. The installer will
@@ -60,18 +82,19 @@ and installs it in ~/Library/Mail/Bundles/. You will need to quit and
 relaunch Mail for the plugin to be registered.
 
 On macOS 10.14 and later, the plugin must be explicitly enabled in Mail
-Preferences. Choose 'Manage Plug-ins...' from the General tab, tick
-MailWrap.mailbundle, then choose 'Apply and Restart Mail'.
+Preferences or Settings. Choose 'Manage Plug-ins...' from the General tab,
+tick MailWrap.mailbundle, then choose 'Apply and Restart Mail'.
 
 On macOS 11.0 and later, the plugin also needs to be ad-hoc signed and
-authorised before it will work. To do this, run
+authorised before it will work. The installer will run
 
   codesign -f -s - ~/Library/Mail/Bundles/MailWrap.mailbundle
   spctl --add --label MailWrap ~/Library/Mail/Bundles/MailWrap.mailbundle
   spctl --enable --label MailWrap
 
-after running the install.py script. Many thanks to A. Wilcox (awilfox) for
-providing these signing instructions on their Cat Fox Life blog.
+for you, but spctl will require your password to allow the changes. Many
+thanks to A. Wilcox (awilfox) for providing these signing instructions on
+their Cat Fox Life blog.
 
 If the sandbox doesn't allow Mail.app to read the directory where your
 Python is installed, you may need to change 'semi_standalone' to False in

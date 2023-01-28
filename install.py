@@ -25,17 +25,20 @@ if os.path.exists('/System/Applications/Mail.app'):
 else:
     mail_path = '/Applications/Mail.app/Contents/Info'
 
-command = 'defaults read %s CFBundleShortVersionString' % mail_path
-if tuple(map(int, os.popen(command).read().strip().split('.'))) < (10, 0):
-    sys.stderr.write('MailWrap requires Apple Mail 10.0 or later\n')
-    sys.exit(1)
-
 command = 'defaults read %s PluginCompatibilityUUID' % mail_path
 compatibility_uuids = [ os.popen(command).read().strip() ]
-version = '.'.join(platform.mac_ver()[0].split('.')[:2])
+major, minor = map(int, platform.mac_ver()[0].split('.')[:2])
 
-if version == '10.16':
+if major == 10 and minor < 12:
+    sys.stderr.write('MailWrap requires macOS 10.12 or later\n')
+    sys.exit(1)
+
+if major == 10 and minor > 15:
     sys.stderr.write('Please run with SYSTEM_VERSION_COMPAT=0\n')
+    sys.exit(1)
+
+if major > 12:
+    sys.stderr.write('MailWrap does not yet support macOS 13.0 or later\n')
     sys.exit(1)
 
 sys.argv[1:] = ['py2app'] + sys.argv[1:]
@@ -54,8 +57,8 @@ setup(
                 'CFBundleIdentifier': 'uk.me.cdw.MailWrap',
                 'CFBundleVersion': '1.0',
                 'NSHumanReadableCopyright':
-                    'Copyright (C) 2017 Chris Webb <chris@arachsys.com>',
-                'Supported%sPluginCompatibilityUUIDs' % version:
+                    'Copyright (C) 2023 Chris Webb <chris@arachsys.com>',
+                'Supported%d.%dPluginCompatibilityUUIDs' % (major, minor):
                     compatibility_uuids
             },
             'semi_standalone': True,
@@ -67,6 +70,12 @@ setup(
 sys.stdout.close()
 sys.stdout = sys.__stdout__
 print('Installed compatible MailWrap.mailbundle in %s' % install_path)
+
+if major > 10:
+    os.system('codesign -f -s - "%s/MailWrap.mailbundle"' % install_path)
+    os.system('spctl --add --label MailWrap "%s/MailWrap.mailbundle"' \
+        % install_path)
+    os.system('spctl --enable --label MailWrap')
 
 os.system('defaults write com.apple.mail EnableBundles -bool true')
 os.system('rm -f -r ~/Library/Mail/Bundles\\ \\(Disabled\\)/MailWrap.*')
